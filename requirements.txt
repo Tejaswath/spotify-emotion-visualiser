@@ -1,0 +1,8 @@
+Flask
+requests
+spotipy
+pandas
+python-dotenv
+beautifulsoup4
+matplotlib
+openai
