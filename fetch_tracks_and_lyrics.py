@@ -2,13 +2,15 @@ import os
 import pandas as pd
 from lyricsgenius import Genius
 
-# 🔐 Use legit headers to bypass Genius API blocking
-genius = Genius(
-    os.getenv("GENIUS_API_TOKEN"),
-    timeout=15,
-    retries=3,
-    headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
-)
+# ✅ Initialize without headers
+genius = Genius(os.getenv("GENIUS_API_TOKEN"), timeout=15, retries=3)
+
+# ✅ THEN set custom headers
+genius._session.headers.update({
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+})
+
+# Genius config
 genius.skip_non_songs = True
 genius.excluded_terms = ["(Remix)", "(Live)"]
 
