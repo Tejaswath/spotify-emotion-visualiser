@@ -3,20 +3,20 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-# Load API key from .env
 load_dotenv()
-API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-# OpenRouter endpoint and headers
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 HEADERS = {
-    "Authorization": f"Bearer {API_KEY}",
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
 }
 
-# 🔥 Main function to generate vibe check
 def generate_vibe_summary(df_emotions: pd.DataFrame) -> str:
-    track_lines = [f"{i+1}. {row['track']} — {row['mood']}" for i, row in df_emotions.iterrows()]
+    # Use 'track_name' instead of 'track' because your DataFrame has a column 'track_name'
+    track_lines = [
+        f"{i+1}. {row['track_name']} — {row['mood']}" for i, row in df_emotions.iterrows()
+    ]
     track_summary = "\n".join(track_lines)
 
     prompt = (
@@ -49,13 +49,13 @@ def generate_vibe_summary(df_emotions: pd.DataFrame) -> str:
         print("🧠 FULL OpenRouter Response:")
         print(data)
 
-        # ✅ Safe extraction
+        # ✅ Safe extraction: Check if we have the expected structure.
         if isinstance(data, dict) and "choices" in data:
             first_choice = data["choices"][0]
             if isinstance(first_choice, dict) and "message" in first_choice:
                 return first_choice["message"]["content"].strip()
 
-        # Fallback: Return whole response if unknown structure
+        # Fallback: Return the whole response if the structure is not expected.
         return f"⚠️ Unexpected LLM output format:\n\n{data}"
 
     except Exception as e:
@@ -68,7 +68,8 @@ def generate_vibe_summary(df_emotions: pd.DataFrame) -> str:
 if __name__ == "__main__":
     try:
         df = pd.read_csv("data/top_tracks_emotions.csv")
-        df = df.dropna(subset=["track", "mood"])
+        # Ensure that the CSV has columns 'track_name' and 'mood'
+        df = df.dropna(subset=["track_name", "mood"])
         summary = generate_vibe_summary(df)
         pd.DataFrame([{"vibe_summary": summary}]).to_csv("data/top_tracks_summary.csv", index=False)
         print("✅ Vibe summary saved to: data/top_tracks_summary.csv")
