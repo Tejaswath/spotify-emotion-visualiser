@@ -32,7 +32,22 @@ def scan():
         return redirect("/")
 
     try:
-        access_token = session["token_info"]["access_token"]
+        token_info = session.get("token_info")
+        access_token = token_info["access_token"]
+
+        # Refresh token if expired
+        from spotipy.oauth2 import SpotifyOAuth
+        sp_oauth = SpotifyOAuth(
+            client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+            client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
+            redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+            scope="user-top-read"
+        )
+        if sp_oauth.is_token_expired(token_info):
+            token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
+            session["token_info"] = token_info
+            access_token = token_info["access_token"]
+
         results = run_emotion_pipeline(access_token)
 
         if "error" in results:
@@ -48,8 +63,7 @@ def scan():
     except Exception as e:
         return render_template("index.html", error=str(e), authorized=True)
 
-# 👇 Final Render-compatible block
-# 👇 Final Render-compatible block
+# ✅ Render-compatible block
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Render sets PORT env var
+    port = int(os.environ.get("PORT", 5000))  # Render sets PORT
     app.run(host="0.0.0.0", port=port, debug=True)

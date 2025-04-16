@@ -1,19 +1,16 @@
 # main_flow.py
 
 import os
+import spotipy
 from fetch_tracks_and_lyrics import get_top_tracks_with_lyrics
 from analyze_emotions import analyze_emotions as analyze_tracks
 from generate_summary_openrouter import generate_vibe_summary
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-
 
 def create_spotify_client(access_token):
     """
     Returns a spotipy Spotify client using the given access token.
     """
     return spotipy.Spotify(auth=access_token)
-
 
 def run_emotion_pipeline(access_token):
     """
