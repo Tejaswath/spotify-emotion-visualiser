@@ -5,6 +5,8 @@ from auth import get_auth_url, get_token
 from main_flow import run_emotion_pipeline
 import os
 from dotenv import load_dotenv
+from spotipy.oauth2 import SpotifyOAuth
+import time
 
 load_dotenv()
 
@@ -33,22 +35,28 @@ def scan():
 
     try:
         token_info = session.get("token_info")
-        access_token = token_info["access_token"]
+
+        if "expires_at" not in token_info:
+            raise Exception("'expires_at' missing from token_info")
 
         # Refresh token if expired
-        from spotipy.oauth2 import SpotifyOAuth
-        sp_oauth = SpotifyOAuth(
-            client_id=os.getenv("SPOTIPY_CLIENT_ID"),
-            client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
-            redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-            scope="user-top-read"
-        )
-        if sp_oauth.is_token_expired(token_info):
+        if time.time() > token_info["expires_at"]:
+            sp_oauth = SpotifyOAuth(
+                client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+                client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
+                redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+                scope="user-top-read"
+            )
             token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
+            token_info["expires_at"] = int(time.time()) + token_info["expires_in"]
             session["token_info"] = token_info
-            access_token = token_info["access_token"]
 
+        access_token = token_info["access_token"]
         results = run_emotion_pipeline(access_token)
+
+        # ✅ Handle unexpected return types
+        if not isinstance(results, dict):
+            return render_template("index.html", error="Unexpected response from processing pipeline.", authorized=True)
 
         if "error" in results:
             return render_template("index.html", error=results["error"], authorized=True)
