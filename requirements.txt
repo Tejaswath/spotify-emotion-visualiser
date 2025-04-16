@@ -6,3 +6,4 @@ python-dotenv
 beautifulsoup4
 matplotlib
 openai
+lyricsgenius
