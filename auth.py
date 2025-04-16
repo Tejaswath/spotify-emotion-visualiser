@@ -54,7 +54,7 @@ def get_token(code):
         response.raise_for_status()
         token_info = response.json()
 
-        # ✅ Add expires_at manually
+        # ✅ Fix: Set expires_at for token refresh logic
         token_info["expires_at"] = int(time.time()) + token_info["expires_in"]
 
         return token_info
