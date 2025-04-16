@@ -1,6 +1,7 @@
 # auth.py
 
 import os
+import time
 import requests
 from urllib.parse import urlencode
 from flask import session
@@ -36,7 +37,7 @@ def get_auth_url():
 
 def get_token(code):
     """
-    Exchanges authorization code for access token.
+    Exchanges authorization code for access token and sets 'expires_at'.
     """
     data = {
         "grant_type": "authorization_code",
@@ -51,7 +52,12 @@ def get_token(code):
     try:
         response = requests.post(TOKEN_URL, data=data, headers=headers)
         response.raise_for_status()
-        return response.json()
+        token_info = response.json()
+
+        # ✅ Add expires_at manually
+        token_info["expires_at"] = int(time.time()) + token_info["expires_in"]
+
+        return token_info
     except requests.exceptions.RequestException as e:
         print("Error fetching access token:", e)
         return None
