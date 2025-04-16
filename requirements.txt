@@ -1,11 +1,7 @@
 Flask
+gunicorn
 requests
 spotipy
 pandas
 python-dotenv
-beautifulsoup4
-matplotlib
-lyricsgenius
-transformers
-torch
-gunicorn
+openrouter

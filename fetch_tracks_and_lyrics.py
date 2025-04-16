@@ -1,23 +1,17 @@
+# fetch_tracks_and_lyrics.py
+
 import os
 import pandas as pd
-from lyricsgenius import Genius
+import requests
 
-genius = Genius(
-    os.getenv("GENIUS_API_TOKEN"),
-    skip_non_songs=True,
-    excluded_terms=["(Remix)", "(Live)"],
-    timeout=15,
-    retries=3,
-    remove_section_headers=True
-)
-
-# Force the use of the old scraping method (unofficial trick)
-genius._session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
-})
+AUDD_API_TOKEN = os.getenv("AUDD_API_TOKEN")
+AUDD_API_URL = "https://api.audd.io/"
 
 def get_top_tracks_with_lyrics(sp):
-    print("🎧 Fetching top tracks from Spotify...")
+    """
+    Gets user's top 20 tracks from Spotify and fetches lyrics using AudD API.
+    Returns a DataFrame with track name, artist, and lyrics.
+    """
     results = sp.current_user_top_tracks(limit=20, time_range='medium_term')
     tracks = []
 
@@ -26,13 +20,25 @@ def get_top_tracks_with_lyrics(sp):
         artist_name = item["artists"][0]["name"]
 
         print(f"🎤 Searching lyrics for: {track_name} by {artist_name}")
-        lyrics = None
+
         try:
-            song = genius.search_song(track_name, artist_name)
-            if song:
-                lyrics = song.lyrics
+            response = requests.post(AUDD_API_URL, data={
+                "q": f"{track_name} {artist_name}",
+                "api_token": AUDD_API_TOKEN,
+                "return": "lyrics"
+            })
+
+            data = response.json()
+            lyrics = None
+
+            if data.get("status") == "success" and data.get("result") and "lyrics" in data["result"]:
+                lyrics = data["result"]["lyrics"]
+            else:
+                print(f"⚠️ No lyrics found for {track_name} by {artist_name} - {data}")
+
         except Exception as e:
-            print(f"⚠️ Could not fetch lyrics for {track_name} by {artist_name}: {e}")
+            print(f"❌ Error fetching lyrics for {track_name} by {artist_name}: {e}")
+            lyrics = None
 
         tracks.append({
             "track_name": track_name,
