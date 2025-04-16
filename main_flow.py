@@ -1,22 +1,36 @@
 # main_flow.py
 
 import os
-import spotipy
+import pandas as pd
 from fetch_tracks_and_lyrics import get_top_tracks_with_lyrics
 from analyze_emotions import analyze_emotions as analyze_tracks
 from generate_summary_openrouter import generate_vibe_summary
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
-def create_spotify_client(access_token):
-    """
-    Returns a spotipy Spotify client using the given access token.
-    """
-    return spotipy.Spotify(auth=access_token)
+def create_spotify_oauth():
+    return SpotifyOAuth(
+        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
+        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+        scope="user-top-read"
+    )
 
-def run_emotion_pipeline(access_token):
+def get_spotify_client_with_refresh(token_info):
+    sp_oauth = create_spotify_oauth()
+
+    if sp_oauth.is_token_expired(token_info):
+        print("🔄 Access token expired. Refreshing...")
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+
+    access_token = token_info["access_token"]
+    return spotipy.Spotify(auth=access_token), token_info
+
+def run_emotion_pipeline(token_info):
     """
-    Full pipeline: Spotify top tracks → lyrics → emotion analysis → LLM vibe summary
+    Main pipeline: fetch Spotify tracks → fetch lyrics (AudD) → analyze emotions → generate vibe summary.
     """
-    sp = create_spotify_client(access_token)
+    sp, token_info = get_spotify_client_with_refresh(token_info)
 
     print("[1/4] Fetching top tracks and lyrics...")
     tracks_df = get_top_tracks_with_lyrics(sp)
