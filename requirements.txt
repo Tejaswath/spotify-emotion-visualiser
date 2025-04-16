@@ -8,3 +8,4 @@ matplotlib
 lyricsgenius
 transformers
 torch
+gunicorn
