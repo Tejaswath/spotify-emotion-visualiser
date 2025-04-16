@@ -5,5 +5,3 @@ spotipy
 pandas
 python-dotenv
 openrouter
-transformers
-torch
