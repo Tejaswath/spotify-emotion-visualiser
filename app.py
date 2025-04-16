@@ -49,6 +49,7 @@ def scan():
         return render_template("index.html", error=str(e), authorized=True)
 
 # 👇 Final Render-compatible block
+# 👇 Final Render-compatible block
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Render sets PORT env var
     app.run(host="0.0.0.0", port=port, debug=True)
