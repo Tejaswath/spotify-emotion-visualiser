@@ -11,13 +11,11 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
-
 @app.route("/")
 def index():
     if "token_info" not in session:
         return render_template("index.html", auth_url=get_auth_url(), authorized=False)
     return render_template("index.html", authorized=True)
-
 
 @app.route("/callback")
 def callback():
@@ -27,7 +25,6 @@ def callback():
         if token_info and "access_token" in token_info:
             session["token_info"] = token_info
     return redirect("/")
-
 
 @app.route("/scan")
 def scan():
@@ -51,6 +48,7 @@ def scan():
     except Exception as e:
         return render_template("index.html", error=str(e), authorized=True)
 
-
+# 👇 Final Render-compatible block
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render sets PORT env var
+    app.run(host="0.0.0.0", port=port, debug=True)
